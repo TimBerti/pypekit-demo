@@ -3,31 +3,47 @@ import pandas as pd
 
 
 class IrisLoader(Task):
-    output_category = "dataset"
+    input_types = ["source"]
+    output_types = ["raw"]
 
-    def run(self, input_path=None, output_base_path=None):
+    def run(self, _):
         from sklearn.datasets import load_iris
         iris = load_iris()
         iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
         iris_df['target'] = iris.target
-        iris_df.to_csv(f"{output_base_path}.csv", index=False)
-        return f"{output_base_path}.csv"
+        return iris_df
+
+
+class TrainTestSplitter(Task):
+    input_types = ["raw"]
+    output_types = ["split"]
+
+    def run(self, df):
+        from sklearn.model_selection import train_test_split
+        train_df, test_df = train_test_split(df, test_size=0.2)
+        train_df['train'] = 1
+        test_df['train'] = 0
+        df = pd.concat([train_df, test_df], ignore_index=True)
+        return df
+
 
 class Scaler(Task):
-    input_category = "dataset"
-    output_category = "dataset"
+    input_types = ["split"]
+    output_types = ["processed"]
 
-    def run(self, input_path=None, output_base_path=None):
-        iris_df = pd.read_csv(input_path)
-        X = iris_df.drop(columns=['target'])
+    def run(self, df):
+        X = df.drop(columns=['target', 'train'])
+        X_train = X[df['train'] == 1]
 
         scaler = self.get_scaler()
-        X_scaled = scaler.fit_transform(X)
+        scaler.fit(X_train)
 
-        scaled_df = pd.DataFrame(data=X_scaled, columns=iris_df.columns[:-1])
-        scaled_df['target'] = iris_df['target']
-        scaled_df.to_csv(f"{output_base_path}.csv", index=False)
-        return f"{output_base_path}.csv"
+        X_scaled = scaler.transform(X)
+        scaled_df = pd.DataFrame(data=X_scaled, columns=X.columns)
+        scaled_df['target'] = df['target']
+        scaled_df['train'] = df['train']
+
+        return scaled_df
 
     def get_scaler(self):
         raise NotImplementedError("Subclasses should implement this method.")
@@ -46,44 +62,46 @@ class StandardScaler(Scaler):
 
 
 class PCA(Task):
-    input_category = "dataset"
-    output_category = "dataset"
+    input_types = ["split", "processed"]
+    output_types = ["processed"]
 
-    
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
-    def run(self, input_path=None, output_base_path=None):
-        iris_df = pd.read_csv(input_path)
-        X = iris_df.drop(columns=['target'])
+    def run(self, df):
+        X = df.drop(columns=['target', 'train'])
+        X_train = X[df['train'] == 1]
 
         from sklearn.decomposition import PCA
         pca = PCA(**self.kwargs)
-        X_pca = pca.fit_transform(X)
+        pca.fit(X_train)
 
-        pca_df = pd.DataFrame(data=X_pca, columns=[f"PC{i+1}" for i in range(X_pca.shape[1])])
-        pca_df['target'] = iris_df['target']
-        pca_df.to_csv(f"{output_base_path}.csv", index=False)
+        X_pca = pca.transform(X)
+        pca_df = pd.DataFrame(data=X_pca, columns=[
+                              f'PC{i+1}' for i in range(X_pca.shape[1])])
+        pca_df['target'] = df['target']
+        pca_df['train'] = df['train']
 
-        return f"{output_base_path}.csv"
+        return pca_df
 
 
 class Classifier(Task):
-    input_category = "dataset"
+    input_types = ["split", "processed"]
+    output_types = ["processed", "predicted"]
 
-    def run(self, input_path=None, output_base_path=None):
-        iris_df = pd.read_csv(input_path)
-        X = iris_df.drop(columns=['target'])
-        y = iris_df['target']
+    def run(self, df):
+        X = df.drop(columns=['target', 'train'])
+        y = df['target']
+        X_train = X[df['train'] == 1]
+        y_train = y[df['train'] == 1]
 
         classifier = self.get_classifier()
-        classifier.fit(X, y)
+        classifier.fit(X_train, y_train)
+        
         y_pred = classifier.predict(X)
-        X['y_pred'] = y_pred
-        X['target'] = y
-        X.to_csv(f"{output_base_path}.csv", index=False)
+        df['predicted'] = y_pred
 
-        return f"{output_base_path}.csv"
+        return df
 
 
 class LogisticRegression(Classifier):
@@ -111,4 +129,12 @@ class SVC(Classifier):
     def get_classifier(self):
         from sklearn.svm import SVC
         return SVC(**self.kwargs)
-    
+
+
+class Evaluator(Task):
+    input_types = ["predicted"]
+    output_types = ["sink"]
+
+    def run(self, df):
+        df_test = df[df['train'] == 0]
+        return (df_test['target'] == df_test['predicted']).mean()

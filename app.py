@@ -1,34 +1,25 @@
-import os
-import shutil
 import streamlit as st
 import pandas as pd
-from pathlib import Path
 
 from pypekit import Repository, CachedExecutor
 from algo_repo import (
     IrisLoader,
+    TrainTestSplitter,
     MinMaxScaler,
     StandardScaler,
     PCA,
     LogisticRegression,
     RandomForestClassifier,
     SVC,
+    Evaluator
 )
 
 
 def build_and_evaluate_pipelines(algo_list):
-    if not os.path.exists("./cache"):
-        os.makedirs("./cache")
     repository = Repository(algo_list)
-    pipelines = repository.build_pipelines()
-    executor = CachedExecutor(cache_dir="./cache", pipelines=pipelines)
+    pipeline_dict = repository.build_pipelines()
+    executor = CachedExecutor(pipeline_dict)
     results = executor.run()
-
-    for result in results:
-        df = pd.read_csv(result["output_path"])
-        result["accuracy"] = (df["y_pred"] == df["target"]).mean()
-    
-    shutil.rmtree("./cache")
     return results
 
 
@@ -44,12 +35,14 @@ st.markdown(
 
 ALGO_FACTORY = {
     "iris_loader": IrisLoader,
+    "train_test_splitter": TrainTestSplitter,
     "minmax_scaler": MinMaxScaler,
     "standard_scaler": StandardScaler,
     "pca": PCA,
     "logistic_regression": LogisticRegression,
     "random_forest_classifier": RandomForestClassifier,
     "svc": SVC,
+    "evaluator": Evaluator,
 }
 
 ALL_ALGOS = list(ALGO_FACTORY.keys())
@@ -57,7 +50,7 @@ ALL_ALGOS = list(ALGO_FACTORY.keys())
 st.sidebar.header("⚙️ Configure")
 
 selected_names = st.sidebar.multiselect(
-    "Algorithms to include", ALL_ALGOS, default=None
+    "Algorithms to include", ALL_ALGOS, default=["iris_loader", "train_test_splitter", "evaluator"]
 )
 
 run_button = st.sidebar.button("Run Pipelines", type="primary")
@@ -83,9 +76,9 @@ if run_button:
     records = [
         {
             "Pipeline Tasks": " → ".join(r.get("tasks", [])),
-            "Accuracy": round(r.get("accuracy", float("nan")), 4),
+            "Accuracy": round(r.get("output", float("nan")), 4),
         }
-        for r in results
+        for r in results.values()
     ]
     result_df = pd.DataFrame(records)
 
