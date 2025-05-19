@@ -1,3 +1,4 @@
 streamlit
+pypekit
 pandas
 scikit-learn
