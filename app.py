@@ -2,17 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from pypekit import Repository, CachedExecutor
-from algo_repo import (
-    IrisLoader,
-    TrainTestSplitter,
-    MinMaxScaler,
-    StandardScaler,
-    PCA,
-    LogisticRegression,
-    RandomForestClassifier,
-    SVC,
-    Evaluator
-)
+from algo_repo import ALGORITHMS
 
 
 def build_and_evaluate_pipelines(algo_list):
@@ -22,56 +12,46 @@ def build_and_evaluate_pipelines(algo_list):
     results = executor.run()
     return results
 
+iris_df = ALGORITHMS["Data Loader"]["Iris Loader"]().run()
+wine_df = ALGORITHMS["Data Loader"]["Wine Loader"]().run()
 
-st.set_page_config(page_title="Pipeline Builder", page_icon="🧩", layout="wide")
-st.title("🧩 Pipeline Builder")
-st.markdown(
-    """
-    Select the building‑blocks for your pipeline.  When you
-    click **Run Pipelines**, every valid ordering will be generated, executed
-    (with caching), and the accuracy of each resulting model will be displayed.
-    """
-)
+st.title("Pipeline Synthesis Demo")
 
-ALGO_FACTORY = {
-    "iris_loader": IrisLoader,
-    "train_test_splitter": TrainTestSplitter,
-    "minmax_scaler": MinMaxScaler,
-    "standard_scaler": StandardScaler,
-    "pca": PCA,
-    "logistic_regression": LogisticRegression,
-    "random_forest_classifier": RandomForestClassifier,
-    "svc": SVC,
-    "evaluator": Evaluator,
-}
+st.write("### Datasets")
+tab1, tab2 = st.tabs(["Iris Dataset", "Wine Dataset"])
+with tab1:
+    st.dataframe(iris_df[:5])
+with tab2:
+    st.dataframe(wine_df[:5])
 
-ALL_ALGOS = list(ALGO_FACTORY.keys())
+st.write("### Algorithms")
 
-st.sidebar.header("⚙️ Configure")
+algo_selection = {}
+for algo_class in ALGORITHMS:
+    if type(ALGORITHMS[algo_class]) == dict:
+        st.write(f"#### {algo_class}")
+        algo_selection[algo_class] = {}
+        for algo_name in ALGORITHMS[algo_class]:
+            algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=True)
+    else:
+        st.write(f"#### {algo_class}")
+        algo_selection[algo_class] = st.checkbox(algo_class, value=True)
 
-selected_names = st.sidebar.multiselect(
-    "Algorithms to include", ALL_ALGOS, default=["iris_loader", "train_test_splitter", "evaluator"]
-)
-
-run_button = st.sidebar.button("Run Pipelines", type="primary")
-
-
+run_button = st.button("Run", type="primary")
 if run_button:
-    if not selected_names:
-        st.warning("Please select at least one algorithm to proceed.")
-        st.stop()
-
-    selected_algos = []
-    for name in selected_names:
-        cls = ALGO_FACTORY[name]
-        if name == "pca":
-            instance = cls(n_components=2)
+    
+    algo_list = []
+    for algo_class in algo_selection:
+        if type(ALGORITHMS[algo_class]) == dict:
+            for algo_name in algo_selection[algo_class]:
+                if algo_selection[algo_class][algo_name]:
+                    algo_list.append((algo_name, ALGORITHMS[algo_class][algo_name]()))
         else:
-            instance = cls()
-        selected_algos.append((name, instance))
+            if algo_selection[algo_class]:
+                algo_list.append((algo_class, ALGORITHMS[algo_class]()))
 
-    with st.spinner("Building & evaluating pipelines…"):
-        results = build_and_evaluate_pipelines(selected_algos)
+    results = build_and_evaluate_pipelines(algo_list)
+    st.write("### Results")
 
     records = [
         {
@@ -80,11 +60,7 @@ if run_button:
         }
         for r in results.values()
     ]
-    result_df = pd.DataFrame(records)
-
-    st.success(f"Finished {len(result_df)} pipelines! ✨")
-    st.dataframe(result_df, use_container_width=True)
-
-else:
-    st.info("Pick your algorithms in the sidebar and hit **Run Pipelines**.")
-
+    result_df = pd.DataFrame(records).sort_values(
+        by="Accuracy", ascending=False
+    )
+    st.dataframe(result_df)

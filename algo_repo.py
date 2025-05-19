@@ -2,16 +2,31 @@ from pypekit import Task
 import pandas as pd
 
 
-class IrisLoader(Task):
+class DataLoader(Task):
     input_types = ["source"]
     output_types = ["raw"]
 
-    def run(self, _):
+    def run(self, _=None):
+        load_data = self.get_data_loader()
+        data = load_data()
+        df = pd.DataFrame(data.data, columns=data.feature_names)
+        df['target'] = data.target
+        return df
+
+    def get_data_loader(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+
+class IrisLoader(DataLoader):
+    def get_data_loader(self):
         from sklearn.datasets import load_iris
-        iris = load_iris()
-        iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
-        iris_df['target'] = iris.target
-        return iris_df
+        return load_iris
+
+
+class WineLoader(DataLoader):
+    def get_data_loader(self):
+        from sklearn.datasets import load_wine
+        return load_wine
 
 
 class TrainTestSplitter(Task):
@@ -87,7 +102,7 @@ class PCA(Task):
 
 class Classifier(Task):
     input_types = ["split", "processed"]
-    output_types = ["processed", "predicted"]
+    output_types = ["predicted"]
 
     def run(self, df):
         X = df.drop(columns=['target', 'train'])
@@ -97,7 +112,7 @@ class Classifier(Task):
 
         classifier = self.get_classifier()
         classifier.fit(X_train, y_train)
-        
+
         y_pred = classifier.predict(X)
         df['predicted'] = y_pred
 
@@ -138,3 +153,23 @@ class Evaluator(Task):
     def run(self, df):
         df_test = df[df['train'] == 0]
         return (df_test['target'] == df_test['predicted']).mean()
+
+
+ALGORITHMS = {
+    "Data Loader": {
+        "Iris Loader": IrisLoader,
+        "Wine Loader": WineLoader,
+    },
+    "Train-Test Split": TrainTestSplitter,
+    "Scaler": {
+        "Min-Max Scaler": MinMaxScaler,
+        "Standard Scaler": StandardScaler,
+    },
+    "PCA": PCA,
+    "Classifier": {
+        "Logistic Regression": LogisticRegression,
+        "Random Forest": RandomForestClassifier,
+        "SVC": SVC,
+    },
+    "Evaluator": Evaluator,
+}
