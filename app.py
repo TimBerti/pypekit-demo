@@ -7,7 +7,11 @@ from algo_repo import ALGORITHMS
 
 def build_and_evaluate_pipelines(algo_list):
     repository = Repository(algo_list)
-    pipeline_dict = repository.build_pipelines()
+    try:
+        pipeline_dict = repository.build_pipelines()
+    except ValueError:
+        st.error("No valid pipeline found.")
+        return None
     executor = CachedExecutor(pipeline_dict)
     results = executor.run()
     return results
@@ -39,7 +43,6 @@ for algo_class in ALGORITHMS:
 
 run_button = st.button("Run", type="primary")
 if run_button:
-    
     algo_list = []
     for algo_class in algo_selection:
         if type(ALGORITHMS[algo_class]) == dict:
@@ -51,16 +54,17 @@ if run_button:
                 algo_list.append((algo_class, ALGORITHMS[algo_class]()))
 
     results = build_and_evaluate_pipelines(algo_list)
-    st.write("### Results")
+    if results:
+        st.write("### Results")
 
-    records = [
-        {
-            "Pipeline Tasks": " → ".join(r.get("tasks", [])),
-            "Accuracy": round(r.get("output", float("nan")), 4),
-        }
-        for r in results.values()
-    ]
-    result_df = pd.DataFrame(records).sort_values(
-        by="Accuracy", ascending=False
-    )
-    st.dataframe(result_df)
+        records = [
+            {
+                "Pipeline Tasks": " → ".join(r.get("tasks", [])),
+                "Accuracy": round(r.get("output", float("nan")), 4),
+            }
+            for r in results.values()
+        ]
+        result_df = pd.DataFrame(records).sort_values(
+            by="Accuracy", ascending=False
+        )
+        st.dataframe(result_df)
