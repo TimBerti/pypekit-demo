@@ -10,16 +10,19 @@ def build_and_evaluate_pipelines(algo_list):
     try:
         repository.build_tree()
         pipelines = repository.build_pipelines()
+        if len(pipelines) == 1:
+            if len(pipelines[0].tasks) == 1:
+                raise ValueError("No valid pipeline found.")
     except ValueError:
         st.error("No valid pipeline found.")
-        return None
+        return None, None
     executor = CachedExecutor(pipelines)
     results = executor.run()
     return repository, results
 
-meltpoolnet_df = ALGORITHMS["Data Loader (select at least one)"]["MeltPoolNet Loader"]().run()
-iris_df = ALGORITHMS["Data Loader (select at least one)"]["Iris Loader"]().run()
-wine_df = ALGORITHMS["Data Loader (select at least one)"]["Wine Loader"]().run()
+meltpoolnet_df = ALGORITHMS["Data Loader"]["MeltPoolNet Loader"]().run()
+iris_df = ALGORITHMS["Data Loader"]["Iris Loader"]().run()
+wine_df = ALGORITHMS["Data Loader"]["Wine Loader"]().run()
 
 st.title("Pipeline Synthesis Demo")
 
@@ -36,14 +39,22 @@ st.write("### Algorithms")
 
 algo_selection = {}
 for algo_class in ALGORITHMS:
-    st.write(f"#### {algo_class}")
-    algo_selection[algo_class] = {}
-    for algo_name in ALGORITHMS[algo_class]:
-        algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=False)
+    if algo_class == "Data Loader":
+        st.write(f"#### {algo_class}")
+        dataloader = st.radio(
+            "Data Loader",
+            options=list(ALGORITHMS[algo_class].keys()),
+            label_visibility="collapsed",
+        )
+    else:
+        st.write(f"#### {algo_class}")
+        algo_selection[algo_class] = {}
+        for algo_name in ALGORITHMS[algo_class]:
+            algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=False)
 
 run_button = st.button("Run", type="primary")
 if run_button:
-    algo_list = []
+    algo_list = [ALGORITHMS["Data Loader"][dataloader]]
     for algo_class in algo_selection:
         for algo_name in algo_selection[algo_class]:
             if algo_selection[algo_class][algo_name]:
@@ -66,5 +77,5 @@ if run_button:
         )
         st.dataframe(result_df)
 
-    st.write("### Pipeline Graph")
-    st.code(repository.build_tree_string())
+        st.write("### Pipeline Graph")
+        st.code(repository.build_tree_string())

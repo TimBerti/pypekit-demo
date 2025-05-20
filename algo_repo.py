@@ -167,7 +167,7 @@ class Evaluator(Task):
 
 
 ALGORITHMS = {
-    "Data Loader (select at least one)": {
+    "Data Loader": {
         "MeltPoolNet Loader": MeltPoolNetLoader,
         "Iris Loader": IrisLoader,
         "Wine Loader": WineLoader,
@@ -182,7 +182,7 @@ ALGORITHMS = {
     "Processing": {
         "PCA": PCA,
     },
-    "Classifier (select at least one)": {
+    "Classifier (required)": {
         "Logistic Regression": LogisticRegression,
         "Random Forest": RandomForestClassifier,
         "SVC": SVC,
