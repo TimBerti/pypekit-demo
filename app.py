@@ -16,14 +16,14 @@ def build_and_evaluate_pipelines(algo_list):
     results = executor.run()
     return results
 
+meltpoolnet_df = ALGORITHMS["Data Loader"]["MeltPoolNet Loader"]().run()
 iris_df = ALGORITHMS["Data Loader"]["Iris Loader"]().run()
 wine_df = ALGORITHMS["Data Loader"]["Wine Loader"]().run()
-meltpoolnet_df = ALGORITHMS["Data Loader"]["MeltPoolNet Loader"]().run()
 
 st.title("Pipeline Synthesis Demo")
 
 st.write("### Datasets")
-tab1, tab2, tab3 = st.tabs(["Iris Dataset", "Wine Dataset", "MeltPoolNet Dataset"])
+tab1, tab2, tab3 = st.tabs(["MeltPoolNet Dataset", "Iris Dataset", "Wine Dataset"])
 with tab1:
     st.dataframe(iris_df[:5])
 with tab2:
@@ -39,10 +39,10 @@ for algo_class in ALGORITHMS:
         st.write(f"#### {algo_class}")
         algo_selection[algo_class] = {}
         for algo_name in ALGORITHMS[algo_class]:
-            algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=True)
+            algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=False)
     else:
         st.write(f"#### {algo_class}")
-        algo_selection[algo_class] = st.checkbox(algo_class, value=True)
+        algo_selection[algo_class] = st.checkbox(algo_class, value=False)
 
 run_button = st.button("Run", type="primary")
 if run_button:

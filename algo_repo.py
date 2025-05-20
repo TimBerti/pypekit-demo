@@ -167,21 +167,21 @@ class Evaluator(Task):
 
 
 ALGORITHMS = {
-    "Data Loader": {
+    "Data Loader (select at least one)": {
         "Iris Loader": IrisLoader,
         "Wine Loader": WineLoader,
         "MeltPoolNet Loader": MeltPoolNetLoader,
     },
-    "Train-Test Split": TrainTestSplitter,
+    "Train-Test Split (required)": TrainTestSplitter,
     "Scaler": {
         "Min-Max Scaler": MinMaxScaler,
         "Standard Scaler": StandardScaler,
     },
     "PCA": PCA,
-    "Classifier": {
+    "Classifier (select at least one)": {
         "Logistic Regression": LogisticRegression,
         "Random Forest": RandomForestClassifier,
         "SVC": SVC,
     },
-    "Evaluator": Evaluator,
+    "Evaluator (required)": Evaluator,
 }
