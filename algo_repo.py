@@ -29,6 +29,17 @@ class WineLoader(DataLoader):
         return load_wine
 
 
+class MeltPoolNetLoader(DataLoader):
+    def run(self, _=None):
+        df = pd.read_csv('meltpoolnet_classification.csv')
+        df = df[df['Process'] == 'PBF'][['Power', 'Velocity', 'beam D',
+                                         'density', 'Cp', 'k', 'melting T', 'meltpool shape']]
+        df = df.dropna()
+        df['target'] = df['meltpool shape'].astype('category').cat.codes
+        df = df.drop(columns=['meltpool shape'])
+        return df
+
+
 class TrainTestSplitter(Task):
     input_types = ["raw"]
     output_types = ["split"]
@@ -159,6 +170,7 @@ ALGORITHMS = {
     "Data Loader": {
         "Iris Loader": IrisLoader,
         "Wine Loader": WineLoader,
+        "MeltPoolNet Loader": MeltPoolNetLoader,
     },
     "Train-Test Split": TrainTestSplitter,
     "Scaler": {

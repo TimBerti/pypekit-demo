@@ -18,15 +18,18 @@ def build_and_evaluate_pipelines(algo_list):
 
 iris_df = ALGORITHMS["Data Loader"]["Iris Loader"]().run()
 wine_df = ALGORITHMS["Data Loader"]["Wine Loader"]().run()
+meltpoolnet_df = ALGORITHMS["Data Loader"]["MeltPoolNet Loader"]().run()
 
 st.title("Pipeline Synthesis Demo")
 
 st.write("### Datasets")
-tab1, tab2 = st.tabs(["Iris Dataset", "Wine Dataset"])
+tab1, tab2, tab3 = st.tabs(["Iris Dataset", "Wine Dataset", "MeltPoolNet Dataset"])
 with tab1:
     st.dataframe(iris_df[:5])
 with tab2:
     st.dataframe(wine_df[:5])
+with tab3:
+    st.dataframe(meltpoolnet_df[:5])
 
 st.write("### Algorithms")
 
