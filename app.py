@@ -16,9 +16,9 @@ def build_and_evaluate_pipelines(algo_list):
     results = executor.run()
     return results
 
-meltpoolnet_df = ALGORITHMS["Data Loader"]["MeltPoolNet Loader"]().run()
-iris_df = ALGORITHMS["Data Loader"]["Iris Loader"]().run()
-wine_df = ALGORITHMS["Data Loader"]["Wine Loader"]().run()
+meltpoolnet_df = ALGORITHMS["Data Loader (select at least one)"]["MeltPoolNet Loader"]().run()
+iris_df = ALGORITHMS["Data Loader (select at least one)"]["Iris Loader"]().run()
+wine_df = ALGORITHMS["Data Loader (select at least one)"]["Wine Loader"]().run()
 
 st.title("Pipeline Synthesis Demo")
 
@@ -63,6 +63,7 @@ if run_button:
         records = [
             {
                 "Pipeline Tasks": " → ".join(r.get("tasks", [])),
+                "Runtime (s)": round(r.get("runtime", float("nan")), 4),
                 "Accuracy": round(r.get("output", float("nan")), 4),
             }
             for r in results.values()
