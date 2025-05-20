@@ -3,8 +3,8 @@ import pandas as pd
 
 
 class DataLoader(Task):
-    input_types = ["source"]
-    output_types = ["raw"]
+    input_types = {"source"}
+    output_types = {"raw"}
 
     def run(self, _=None):
         load_data = self.get_data_loader()
@@ -41,8 +41,8 @@ class WineLoader(DataLoader):
 
 
 class TrainTestSplitter(Task):
-    input_types = ["raw"]
-    output_types = ["split"]
+    input_types = {"raw"}
+    output_types = {"split"}
 
     def run(self, df):
         from sklearn.model_selection import train_test_split
@@ -54,8 +54,8 @@ class TrainTestSplitter(Task):
 
 
 class Scaler(Task):
-    input_types = ["split"]
-    output_types = ["processed"]
+    input_types = {"split"}
+    output_types = {"processed"}
 
     def run(self, df):
         X = df.drop(columns=['target', 'train'])
@@ -88,8 +88,8 @@ class StandardScaler(Scaler):
 
 
 class PCA(Task):
-    input_types = ["split", "processed"]
-    output_types = ["processed"]
+    input_types = {"split", "processed"}
+    output_types = {"processed"}
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -112,8 +112,8 @@ class PCA(Task):
 
 
 class Classifier(Task):
-    input_types = ["split", "processed"]
-    output_types = ["predicted"]
+    input_types = {"split", "processed"}
+    output_types = {"predicted"}
 
     def run(self, df):
         X = df.drop(columns=['target', 'train'])
@@ -158,8 +158,8 @@ class SVC(Classifier):
 
 
 class Evaluator(Task):
-    input_types = ["predicted"]
-    output_types = ["sink"]
+    input_types = {"predicted"}
+    output_types = {"sink"}
 
     def run(self, df):
         df_test = df[df['train'] == 0]

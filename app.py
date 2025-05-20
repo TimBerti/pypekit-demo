@@ -6,15 +6,16 @@ from algo_repo import ALGORITHMS
 
 
 def build_and_evaluate_pipelines(algo_list):
-    repository = Repository(algo_list)
+    repository = Repository(set(algo_list))
     try:
-        pipeline_dict = repository.build_pipelines()
+        repository.build_tree()
+        pipelines = repository.build_pipelines()
     except ValueError:
         st.error("No valid pipeline found.")
         return None
-    executor = CachedExecutor(pipeline_dict)
+    executor = CachedExecutor(pipelines)
     results = executor.run()
-    return results
+    return repository, results
 
 meltpoolnet_df = ALGORITHMS["Data Loader (select at least one)"]["MeltPoolNet Loader"]().run()
 iris_df = ALGORITHMS["Data Loader (select at least one)"]["Iris Loader"]().run()
@@ -46,9 +47,9 @@ if run_button:
     for algo_class in algo_selection:
         for algo_name in algo_selection[algo_class]:
             if algo_selection[algo_class][algo_name]:
-                algo_list.append((algo_name, ALGORITHMS[algo_class][algo_name]()))
+                algo_list.append(ALGORITHMS[algo_class][algo_name])
 
-    results = build_and_evaluate_pipelines(algo_list)
+    repository, results = build_and_evaluate_pipelines(algo_list)
     if results:
         st.write("### Results")
 
@@ -58,9 +59,12 @@ if run_button:
                 "Runtime (s)": round(r.get("runtime", float("nan")), 4),
                 "Accuracy": round(r.get("output", float("nan")), 4),
             }
-            for r in results.values()
+            for r in results
         ]
         result_df = pd.DataFrame(records).sort_values(
             by="Accuracy", ascending=False
         )
         st.dataframe(result_df)
+
+    st.write("### Pipeline Graph")
+    st.code(repository.build_tree_string())
