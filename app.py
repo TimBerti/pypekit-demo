@@ -26,11 +26,11 @@ st.title("Pipeline Synthesis Demo")
 st.write("### Datasets")
 tab1, tab2, tab3 = st.tabs(["MeltPoolNet Dataset", "Iris Dataset", "Wine Dataset"])
 with tab1:
-    st.dataframe(iris_df[:5])
-with tab2:
-    st.dataframe(wine_df[:5])
-with tab3:
     st.dataframe(meltpoolnet_df[:5])
+with tab2:
+    st.dataframe(iris_df[:5])
+with tab3:
+    st.dataframe(wine_df[:5])
 
 st.write("### Algorithms")
 
