@@ -35,26 +35,18 @@ st.write("### Algorithms")
 
 algo_selection = {}
 for algo_class in ALGORITHMS:
-    if type(ALGORITHMS[algo_class]) == dict:
-        st.write(f"#### {algo_class}")
-        algo_selection[algo_class] = {}
-        for algo_name in ALGORITHMS[algo_class]:
-            algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=False)
-    else:
-        st.write(f"#### {algo_class}")
-        algo_selection[algo_class] = st.checkbox(algo_class, value=False)
+    st.write(f"#### {algo_class}")
+    algo_selection[algo_class] = {}
+    for algo_name in ALGORITHMS[algo_class]:
+        algo_selection[algo_class][algo_name] = st.checkbox(algo_name, value=False)
 
 run_button = st.button("Run", type="primary")
 if run_button:
     algo_list = []
     for algo_class in algo_selection:
-        if type(ALGORITHMS[algo_class]) == dict:
-            for algo_name in algo_selection[algo_class]:
-                if algo_selection[algo_class][algo_name]:
-                    algo_list.append((algo_name, ALGORITHMS[algo_class][algo_name]()))
-        else:
-            if algo_selection[algo_class]:
-                algo_list.append((algo_class, ALGORITHMS[algo_class]()))
+        for algo_name in algo_selection[algo_class]:
+            if algo_selection[algo_class][algo_name]:
+                algo_list.append((algo_name, ALGORITHMS[algo_class][algo_name]()))
 
     results = build_and_evaluate_pipelines(algo_list)
     if results:

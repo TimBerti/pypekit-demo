@@ -17,6 +17,17 @@ class DataLoader(Task):
         raise NotImplementedError("Subclasses should implement this method.")
 
 
+class MeltPoolNetLoader(DataLoader):
+    def run(self, _=None):
+        df = pd.read_csv('meltpoolnet_classification.csv')
+        df = df[df['Process'] == 'PBF'][['Power', 'Velocity', 'beam D',
+                                         'density', 'Cp', 'k', 'melting T', 'meltpool shape']]
+        df = df.dropna()
+        df['target'] = df['meltpool shape'].astype('category').cat.codes
+        df = df.drop(columns=['meltpool shape'])
+        return df
+
+
 class IrisLoader(DataLoader):
     def get_data_loader(self):
         from sklearn.datasets import load_iris
@@ -27,17 +38,6 @@ class WineLoader(DataLoader):
     def get_data_loader(self):
         from sklearn.datasets import load_wine
         return load_wine
-
-
-class MeltPoolNetLoader(DataLoader):
-    def run(self, _=None):
-        df = pd.read_csv('meltpoolnet_classification.csv')
-        df = df[df['Process'] == 'PBF'][['Power', 'Velocity', 'beam D',
-                                         'density', 'Cp', 'k', 'melting T', 'meltpool shape']]
-        df = df.dropna()
-        df['target'] = df['meltpool shape'].astype('category').cat.codes
-        df = df.drop(columns=['meltpool shape'])
-        return df
 
 
 class TrainTestSplitter(Task):
@@ -168,20 +168,26 @@ class Evaluator(Task):
 
 ALGORITHMS = {
     "Data Loader (select at least one)": {
+        "MeltPoolNet Loader": MeltPoolNetLoader,
         "Iris Loader": IrisLoader,
         "Wine Loader": WineLoader,
-        "MeltPoolNet Loader": MeltPoolNetLoader,
     },
-    "Train-Test Split (required)": TrainTestSplitter,
+    "Train-Test Split (required)": {
+        "Train-Test Split": TrainTestSplitter,
+    },
     "Scaler": {
         "Min-Max Scaler": MinMaxScaler,
         "Standard Scaler": StandardScaler,
     },
-    "PCA": PCA,
+    "Processing": {
+        "PCA": PCA,
+    },
     "Classifier (select at least one)": {
         "Logistic Regression": LogisticRegression,
         "Random Forest": RandomForestClassifier,
         "SVC": SVC,
     },
-    "Evaluator (required)": Evaluator,
+    "Evaluator (required)": {
+        "Accuracy Evaluator": Evaluator,
+    },
 }
