@@ -2,3 +2,5 @@ streamlit
 pypekit
 pandas
 scikit-learn
+pymatgen
+matminer

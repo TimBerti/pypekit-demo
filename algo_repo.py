@@ -1,5 +1,7 @@
-from pypekit import Task
 import pandas as pd
+from pypekit import Task
+
+from elemental_features import create_features
 
 
 class DataLoader(Task):
@@ -20,7 +22,7 @@ class DataLoader(Task):
 class MeltPoolNetLoader(DataLoader):
     def run(self, _=None):
         df = pd.read_csv('meltpoolnet_classification.csv')
-        df = df[df['Process'] == 'PBF'][['Power', 'Velocity', 'beam D',
+        df = df[df['Process'] == 'PBF'][['Material', 'Power', 'Velocity', 'beam D',
                                          'density', 'Cp', 'k', 'melting T', 'meltpool shape']]
         df = df.dropna()
         df['target'] = df['meltpool shape'].astype('category').cat.codes
@@ -38,13 +40,25 @@ class WineLoader(DataLoader):
     def get_data_loader(self):
         from sklearn.datasets import load_wine
         return load_wine
+    
+
+class FeatureExtractor(Task):
+    input_types = {"raw"}
+    output_types = {"feature"}
+
+    def run(self, df):
+        if 'Material' in df.columns:
+            df = pd.concat([df, df['Material'].apply(create_features)], axis=1)
+            df = df.dropna(how='any')
+        return df
 
 
 class TrainTestSplitter(Task):
-    input_types = {"raw"}
+    input_types = {"raw", "feature"}
     output_types = {"split"}
 
     def run(self, df):
+        df.drop(columns=['Material'], inplace=True, errors='ignore')
         from sklearn.model_selection import train_test_split
         train_df, test_df = train_test_split(df, test_size=0.2)
         train_df['train'] = 1
@@ -177,6 +191,9 @@ ALGORITHMS = {
         "MeltPoolNet Loader": MeltPoolNetLoader,
         "Iris Loader": IrisLoader,
         "Wine Loader": WineLoader,
+    },
+    "Feature Extraction": {
+        "Elemental Features": FeatureExtractor,
     },
     "Train-Test Split (required)": {
         "Train-Test Split": TrainTestSplitter,

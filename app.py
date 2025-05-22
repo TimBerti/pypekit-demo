@@ -62,14 +62,16 @@ if run_button:
 
     repository, results = build_and_evaluate_pipelines(algo_list)
     if results:
+        st.write("### Pipeline Graph")
+        st.code(repository.build_tree_string())
         st.write("### Results")
 
         records = [
             {
                 "Pipeline Tasks": " → ".join(r.get("tasks", [])),
-                "Runtime (s)": round(r["runtime"], 4),
-                "Train Accuracy": round(r["output"]["train_accuracy"], 4),
-                "Test Accuracy": round(r["output"]["test_accuracy"], 4),
+                "Runtime": r.get("runtime", 0),
+                "Train Accuracy": r.get("output", {}).get("train_accuracy", 0),
+                "Test Accuracy": r.get("output", {}).get("test_accuracy", 0),
             }
             for r in results
         ]
@@ -77,6 +79,3 @@ if run_button:
             by="Test Accuracy", ascending=False
         )
         st.dataframe(result_df)
-
-        st.write("### Pipeline Graph")
-        st.code(repository.build_tree_string())
