@@ -67,13 +67,14 @@ if run_button:
         records = [
             {
                 "Pipeline Tasks": " → ".join(r.get("tasks", [])),
-                "Runtime (s)": round(r.get("runtime", float("nan")), 4),
-                "Accuracy": round(r.get("output", float("nan")), 4),
+                "Runtime (s)": round(r["runtime"], 4),
+                "Train Accuracy": round(r["output"]["train_accuracy"], 4),
+                "Test Accuracy": round(r["output"]["test_accuracy"], 4),
             }
             for r in results
         ]
         result_df = pd.DataFrame(records).sort_values(
-            by="Accuracy", ascending=False
+            by="Test Accuracy", ascending=False
         )
         st.dataframe(result_df)
 

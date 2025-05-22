@@ -162,8 +162,14 @@ class Evaluator(Task):
     output_types = {"sink"}
 
     def run(self, df):
+        df_train = df[df['train'] == 1]
         df_test = df[df['train'] == 0]
-        return (df_test['target'] == df_test['predicted']).mean()
+        train_accuracy = (df_train['target'] == df_train['predicted']).mean()
+        test_accuracy = (df_test['target'] == df_test['predicted']).mean()
+        return {
+            "train_accuracy": train_accuracy,
+            "test_accuracy": test_accuracy,
+        }
 
 
 ALGORITHMS = {
